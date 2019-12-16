@@ -1,0 +1,253 @@
+---
+title: "Computational Mathematics"
+author: "Alain Kuiete Tchoupou"
+date: "December 15, 2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Probleme 1
+```{r}
+set.seed(35)
+N <- 10000
+nran <- 100
+mu <- sig <- (N + 1)/2
+
+X <- runif(N, min = 1, max = N)
+Y <- rnorm(nran, mean = mu, sd = sig)
+```
+
+## Probability
+### 1a. Let A be the event X>x and B be the event X>y, P(X>x|X>y) = P(A|B). That is the probability of event A given the event B has accured. $P(A|B)=\frac{P(A\cap B)}{P(B)} = frac{P(A)}{P(B)}$
+```{r}
+sum(X>median(X) & X>quantile(Y, 0.25))/sum(X>quantile(Y, 0.25))
+```
+
+### 1b. Let A be the event X>x and B the event Y>y. The two events are independent. $P(X>x, Y>y)= P(A,B) = P(A)P(B)$
+```{r}
+sum(X>median(X))/length(X)*sum(Y>quantile(Y, 0.25))/length(Y)
+```
+
+### 1c. Let A be the event X<x and B the event X>y, $P(X<x|X>y) = P(A|B) = \frac{P(A\cap B)}{P(B)}
+```{r}
+sum(X<median(X) & X>quantile(Y, 0.25))/sum(X>quantile(Y, 0.25))
+```
+### Marginal and joint probabilities
+```{r}
+x <- median(X)
+y <- quantile(Y, 0.25)
+
+A <- sum(X>x & Y>y)
+B <- sum(X>x & Y<y)
+C <- sum(X<x & Y>y)
+D <- sum(X<x & Y<y)
+```
+
+
+```{r}
+marray <- matrix(c(A, B, A+B, C, D, C+D, A+C, B+D, A+B+C+D), byrow = FALSE, nrow = 3)
+colnames(marray) <- c("X>x", "X<x", "Margin")
+rownames(marray) <- c("Y>y", "Y<y", "Margin")
+marray/N
+
+```
+
+We see that P(X>x and Y>y) = 0.3719 and P(X>x)P(Y>y) = .5(.75) = .375
+The two probabilities are  not equal
+### Fischer's Exact test and Chi Square Test
+```{r}
+mat <- matrix(c(A, B, C, D), byrow = FALSE, ncol = 2)
+colnames(mat) <- c("X>x", "X<x")
+rownames(mat) <- c("Y>y", "Y<y")
+mat
+```
+
+```{r}
+fisher.test(mat)
+```
+
+```{r}
+chisq.test(mat)
+```
+
+The p-value of the two tests are aproximately the same. That value is greater than 0.05. It means that we do not reject the null hypothesis. There is a convincing evedence that the distribution of X is independent from the distribution of Y. 
+The Fisher test is used for small sample sizes wher the  Chi_Square test is not appropriate. 
+
+## Problem 2
+### Reading the dataset
+```{r}
+train.set <- read.csv('/home/alainkuiete/Documents/DATA605/train.csv')
+head(train.set)
+```
+
+
+### Descriptive and Inferential Statistics
+#### Structure of the dataset
+```{r}
+str(train.set)
+```
+
+#### summary
+```{r}
+summary(train.set)
+```
+
+#### Histograms
+```{r}
+par(mfrow = c(4,3))
+hist(train.set$MSSubClass, main = 'Type of Dwelling')
+plot(train.set$Neighborhood)
+plot(train.set$BldgType)
+plot(train.set$HouseStyle)
+hist(train.set$OverallQual, main = 'Overall Quality')
+hist(train.set$OverallCond, main = 'Overall Condition')
+hist(train.set$YearBuilt, main = 'Year Bulit')
+hist(train.set$SalePrice, main = 'Sale Price')
+hist(train.set$GarageCars, main = 'Garage Cars')
+plot(train.set$ExterCond)
+hist(train.set$FullBath, main = 'Full Bathroom')
+hist(train.set$TotalBsmtSF, main = 'Total BasementSF')
+```
+
+#### Scatter plot
+```{r}
+par(mfrow = c(2,2))
+scatter.smooth(train.set$Neighborhood, train.set$SalePrice)
+plot(train.set$OverallCond, train.set$SalePrice)
+plot(train.set$GarageArea, train.set$SalePrice)
+plot(train.set$LotArea, train.set$SalePrice)
+```
+
+#### Correlation matrix
+```{r}
+df <- data.frame(HouseType = train.set$MSSubClass, GarageArea = train.set$GarageArea, HouseQual = train.set$OverallQual)
+cor_mat <- cor(df)
+cor_mat
+```
+Correlation Tests
+Hypothesis Tests
+```{r}
+cor.test(train.set$MSSubClass, train.set$GarageArea)
+```
+
+The p-value is closed to zero. We reject the null hypothesis.There is convincing evidence that the correalation between MSSubClass and GarageArea is not null.
+
+
+
+```{r}
+cor.test(train.set$MSSubClass, train.set$OverallQual)
+```
+We do not reject the null hypothesis. The correlation between MSSubClass and OverallQual is null.
+
+```{r}
+cor.test(train.set$GarageArea, train.set$OverallQual)
+```
+We reject the null hypothesis. There is a convincing evidence that the correlation between GarageArea and OverallQual is not null.
+
+
+### Linear Algebra and Correlation
+#### Precision Matrix
+```{r}
+prec_mat <- solve(cor_mat)
+prec_mat
+```
+
+
+
+#### Prodcut cor X prec
+```{r}
+round(cor_mat%*%prec_mat, 1)
+```
+
+#### Product prec X cor
+```{r}
+round(prec_mat%*%cor_mat,1)
+```
+
+#### LU decomposition
+```{r}
+library(pracma)
+LU_M <- lu(cor_mat)
+LU_M
+
+```
+
+
+### Calulus-Based Probability & Statistics
+```{r}
+hist(train.set$MSSubClass)
+```
+dwelling type
+```{r}
+X <- train.set$MSSubClass
+dt <- (X - min(X))
+hist(dt)
+```
+
+
+
+
+
+```{r}
+# MASS Package
+library(MASS)
+#run fitdistr to fit an exponential probability density function, Find optimal lambda
+expdfun <- fitdistr(train.set$MSSubClass,"exponential")
+expdfun$estimate
+```
+
+```{r}
+#1000 samples from this exponential distribution using this value
+hist(rexp(1000,expdfun$estimate),breaks = 200,main = "Fitted Exponential PDF",xlim = c(1,quantile(rexp(1000,expdfun$estimate),0.99)))
+
+```
+
+
+
+
+
+```{r}
+hist(train.set$MSSubClass,breaks = 400,main = "Type of dwelling",xlim = c(1,quantile(train.set$MSSubClass,0.99)))
+
+```
+
+```{r}
+#5th and 95th percentiles using CDF
+qexp(0.05,rate = expdfun$estimate,lower.tail = TRUE,log.p = FALSE)
+```
+
+### Modeling
+```{r}
+reg <- lm(formula = SalePrice ~ MSSubClass + GarageQual + BsmtQual + OverallQual + Neighborhood, data = train.set)
+
+```
+
+Get the test data
+```{r}
+test.set <- read.csv('/home/alainkuiete/Documents/DATA605/train.csv')
+str(test.set)
+```
+
+
+
+```{r}
+pred <- predict(reg, test.set)
+str(pred)
+```
+
+```{r}
+#kaggle Score
+kaggle <- data.frame( Id = test.set[,"Id"],  SalePrice =pred)
+kaggle[kaggle<0] <- 0
+kaggle <- replace(kaggle,is.na(kaggle),0)
+write.csv(kaggle, file="kaggle.csv", row.names = FALSE)
+```
+
+
+
+
